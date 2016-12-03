@@ -286,6 +286,7 @@ static int read_udf_file(const char *iso_name, const char *src,
     if (NULL == p_udf_root) {
       fprintf(stderr, "Sorry, couldn't find / in %s\n",
               iso_name);
+      udf_close(p_udf);
       return 1;
     }
 
@@ -294,6 +295,7 @@ static int read_udf_file(const char *iso_name, const char *src,
       fprintf(stderr, "Sorry, couldn't find %s in %s\n",
               src, iso_name);
       udf_dirent_free(p_udf_root);
+      udf_close(p_udf);
       return 2;
 
     }
@@ -309,8 +311,9 @@ static int read_udf_file(const char *iso_name, const char *src,
         if ( i_read < 0 ) {
           fprintf(stderr, "Error reading UDF file %s at block %u\n",
                   src, i);
-	  free(p_udf_file);
+	  udf_dirent_free(p_udf_file);
 	  udf_dirent_free(p_udf_root);
+	  udf_close(p_udf);
           return 4;
         }
 
@@ -318,13 +321,14 @@ static int read_udf_file(const char *iso_name, const char *src,
 
         if (ferror (outfd)) {
           perror ("fwrite()");
-	  free(p_udf_file);
+	  udf_dirent_free(p_udf_file);
 	  udf_dirent_free(p_udf_root);
+	  udf_close(p_udf);
           return 5;
         }
       }
 
-      free(p_udf_file);
+      udf_dirent_free(p_udf_file);
       udf_dirent_free(p_udf_root);
       udf_close(p_udf);
       *bytes_written = i_file_length;
