@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2003-2009, 2013 Rocky Bernstein <rocky@gnu.org>
+  Copyright (C) 2003-2009, 2013-2014, 2016 Rocky Bernstein <rocky@gnu.org>
   Copyright (C) 2000 Herbert Valerio Riedel <hvr@gnu.org>
 
   This program is free software: you can redistribute it and/or modify
@@ -117,8 +117,6 @@ localtime_r(const time_t *timer, struct tm *result)
     return tmp;
 }
 #endif
-
-static const char _rcsid[] = "$Id: iso9660.c,v 1.41 2008/06/25 08:01:54 rocky Exp $";
 
 /* Variables to hold debugger-helping enumerations */
 enum iso_enum1_s     iso_enums1;
@@ -360,7 +358,7 @@ iso9660_set_ltime_with_timezone(const struct tm *p_tm,
 {
   char *_pvd_date = (char *) pvd_date;
 
-  memset (_pvd_date, '0', 16);
+  memset (_pvd_date, (int) '0', 16);
   pvd_date->lt_gmtoff = (iso712_t) 0; /* Start out with time zone GMT. */
 
   if (!p_tm) return;

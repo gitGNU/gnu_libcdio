@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2004-2005, 2008, 2010-2013
+  Copyright (C) 2004-2005, 2008, 2010-2014
   Rocky Bernstein <rocky@gnu.org>
 
   This program is free software: you can redistribute it and/or modify
@@ -647,7 +647,7 @@ run_mmc_cmd_win32ioctl( void *p_user_data,
     int i_sense_size = p_sptwb->Spt.SenseInfoLength;
     if (i_sense_size > sizeof(p_sptwb->ucSenseBuf)) {
       cdio_warn("sense size returned %d is greater buffer size %d\n",
-		i_sense_size, sizeof(p_sptwb->ucSenseBuf));
+		i_sense_size, (int)sizeof(p_sptwb->ucSenseBuf));
       i_sense_size = sizeof(p_sptwb->ucSenseBuf);
     }
     memcpy((void *) p_env->gen.scsi_mmc_sense, &(p_sptwb->ucSenseBuf),
@@ -1187,6 +1187,35 @@ read_toc_win32ioctl (_img_private_t *p_env)
 }
 
 /**
+  Get the LSN of the first track of the last session of
+  on the CD.
+ */
+driver_return_code_t
+get_last_session_win32ioctl (void *p_user_data,
+                             /*out*/ lsn_t *i_last_session)
+{
+  const _img_private_t *p_env = p_user_data;
+  DWORD dw_bytes_returned;
+  CDROM_TOC_SESSION_DATA session;
+
+  bool b_success =
+    DeviceIoControl(p_env->h_device_handle, IOCTL_CDROM_GET_LAST_SESSION,
+                    NULL, (DWORD) 0, &session, sizeof(session), &dw_bytes_returned, NULL);
+
+  if ( ! b_success ) {
+    windows_error(CDIO_LOG_INFO, GetLastError());
+    return DRIVER_OP_ERROR;
+  }
+
+  *i_last_session = (session.TrackData[0].Address[0] << 24) |
+    (session.TrackData[0].Address[1] << 16) |
+    (session.TrackData[0].Address[2] << 8) |
+    (session.TrackData[0].Address[3]);
+
+  return DRIVER_OP_SUCCESS;
+}
+
+/**
   Return the media catalog number MCN.
 
   Note: string is malloc'd so caller should free() then returned
@@ -1217,6 +1246,36 @@ get_mcn_win32ioctl (const _img_private_t *p_env) {
     cdio_warn( "could not read Q Channel at track %d", 1);
   } else if (mcn.Mcval)
     return strdup((const char *) mcn.MediaCatalog);
+  return NULL;
+}
+
+/**
+  Return the international standard recording code ISRC.
+
+  Note: string is malloc'd so caller should free() then returned
+  string when done with it.
+
+ */
+char *
+get_track_isrc_win32ioctl (const _img_private_t *p_env, track_t i_track) {
+
+  DWORD dw_bytes_returned;
+  SUB_Q_TRACK_ISRC isrc;
+  CDROM_SUB_Q_DATA_FORMAT q_data_format;
+
+  memset( &isrc, 0, sizeof(isrc) );
+
+  q_data_format.Format = CDIO_SUBCHANNEL_TRACK_ISRC;
+  q_data_format.Track  = i_track;
+
+  if( ! DeviceIoControl( p_env->h_device_handle,
+                       IOCTL_CDROM_READ_Q_CHANNEL,
+                       &q_data_format, sizeof(q_data_format),
+                       &isrc, sizeof(isrc),
+                       &dw_bytes_returned, NULL ) ) {
+    cdio_warn( "could not read Q Channel at track %d", 1);
+  } else if (isrc.Tcval)
+    return strdup((const char *) isrc.TrackIsrc);
   return NULL;
 }
 

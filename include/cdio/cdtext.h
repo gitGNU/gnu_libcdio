@@ -244,7 +244,7 @@ void cdtext_destroy (cdtext_t *p_cdtext);
 /*!
   Returns a copy of the return value of cdtext_get_const or NULL.
 
-  Should be freed when done.
+  Must be freed using cdio_free() when done.
   @see cdtext_get_const
 */
 char *cdtext_get (const cdtext_t *p_cdtext, cdtext_field_t key, track_t track);
@@ -275,6 +275,20 @@ cdtext_genre_t cdtext_get_genre (const cdtext_t *p_cdtext);
   @param p_cdtext the CD-TEXT object
 */
 cdtext_lang_t cdtext_get_language (const cdtext_t *p_cdtext);
+
+/*!
+  Returns the first track number.
+
+  @param p_cdtext the CD-TEXT object
+*/
+track_t cdtext_get_first_track(const cdtext_t *p_cdtext);
+
+/*!
+  Returns the last track number.
+
+  @param p_cdtext the CD-TEXT object
+*/
+track_t cdtext_get_last_track(const cdtext_t *p_cdtext);
 
 /*!
   Try to select the given language.

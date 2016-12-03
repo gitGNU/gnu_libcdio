@@ -167,7 +167,7 @@ udf_get_lba(const udf_file_entry_t *p_udf_fe,
     {
       /* The allocation descriptor field is filled with short_ad's. */
       udf_short_ad_t *p_ad = (udf_short_ad_t *)
-	(p_udf_fe->u.ext_attr + p_udf_fe->i_extended_attr);
+	(p_udf_fe->u.ext_attr + uint32_from_le(p_udf_fe->i_extended_attr));
 
       *start = uint32_from_le(p_ad->pos);
       *end = *start +
@@ -179,7 +179,7 @@ udf_get_lba(const udf_file_entry_t *p_udf_fe,
     {
       /* The allocation descriptor field is filled with long_ad's */
       udf_long_ad_t *p_ad = (udf_long_ad_t *)
-	(p_udf_fe->u.ext_attr + p_udf_fe->i_extended_attr);
+	(p_udf_fe->u.ext_attr + uint32_from_le(p_udf_fe->i_extended_attr));
 
       *start = uint32_from_le(p_ad->loc.lba); /* ignore partition number */
       *end = *start +
@@ -190,7 +190,7 @@ udf_get_lba(const udf_file_entry_t *p_udf_fe,
   case ICBTAG_FLAG_AD_EXTENDED:
     {
       udf_ext_ad_t *p_ad = (udf_ext_ad_t *)
-	(p_udf_fe->u.ext_attr + p_udf_fe->i_extended_attr);
+	(p_udf_fe->u.ext_attr + uint32_from_le(p_udf_fe->i_extended_attr));
 
       *start = uint32_from_le(p_ad->ext_loc.lba); /* ignore partition number */
       *end = *start +
@@ -254,7 +254,8 @@ udf_fopen(udf_dirent_t *p_udf_root, const char *psz_name)
     /* file position must be reset when accessing a new file */
     p_udf_root->p_udf->i_position = 0;
 
-    strncpy(tokenline, psz_name, udf_MAX_PATHLEN);
+    tokenline[udf_MAX_PATHLEN-1] = '\0';
+    strncpy(tokenline, psz_name, udf_MAX_PATHLEN-1);
     psz_token = strtok(tokenline, udf_PATH_DELIMITERS);
     if (psz_token) {
       udf_dirent_t *p_udf_dirent =
@@ -738,7 +739,7 @@ udf_readdir(udf_dirent_t *p_udf_dirent)
 	const unsigned int i_len = p_udf_dirent->fid->i_file_id;
 
 	if (DRIVER_OP_SUCCESS != udf_read_sectors(p_udf, &p_udf_dirent->fe, p_udf->i_part_start
-			 + p_udf_dirent->fid->icb.loc.lba, 1)) {
+			 + uint32_from_le(p_udf_dirent->fid->icb.loc.lba), 1)) {
 		udf_dirent_free(p_udf_dirent);
 		return NULL;
 	}

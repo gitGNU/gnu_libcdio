@@ -59,8 +59,6 @@ int CdIo_last_driver = CDIO_DRIVER_UNINIT;
 
 #ifdef HAVE_AIX_CDROM
 const driver_id_t cdio_os_driver = DRIVER_AIX;
-#elif HAVE_BSDI_CDROM
-const driver_id_t cdio_os_driver = DRIVER_BSDI;
 #elif  HAVE_FREEBSD_CDROM
 const driver_id_t cdio_os_driver = DRIVER_FREEBSD;
 #elif  HAVE_LINUX_CDROM
@@ -923,8 +921,7 @@ cdio_have_atapi(CdIo_t *p_cdio)
 bool
 cdio_have_driver(driver_id_t driver_id)
 {
-  if (driver_id < 0 ||
-      driver_id >= sizeof(CdIo_all_drivers)/sizeof(CdIo_all_drivers[0]))
+  if (driver_id >= sizeof(CdIo_all_drivers)/sizeof(CdIo_all_drivers[0]))
     return false;
   return (*CdIo_all_drivers[driver_id].have_driver)();
 }
